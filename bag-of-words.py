@@ -1,0 +1,128 @@
+import numpy as np
+from numpy.linalg import norm
+
+
+VOCAB = {
+    "rag": 0,
+    "stands": 1,
+    "for": 2,
+    "retrieval": 3,
+    "augmented": 4,
+    "generation": 5,
+    "a": 6,
+    "large": 7,
+    "language": 8,
+    "model": 9,
+    "is": 10,
+    "generative": 11,
+    "ai": 12,
+    "text": 13,
+    "enhance": 14,
+    "of": 15,
+    "llms": 16,
+    "by": 17,
+    "incorporating": 18,
+    "external": 19,
+    "data": 20,
+    "bananas": 21,
+    "are": 22,
+    "yellow": 23,
+    "fruits": 24,
+    "apples": 25,
+    "good": 26,
+    "your": 27,
+    "health": 28,
+    "what's": 29,
+    "monkey's": 30,
+    "favorite": 31,
+    "food": 32
+}
+
+def bow_vectorize(text, vocab):
+    """
+    Convert a text into a Bag-of-Words vector by counting how many times 
+    each token from our vocabulary appears in the text.
+    """
+    vector = np.zeros(len(vocab), dtype=int)
+    for word in text.lower().split():
+        # Remove punctuation for consistency
+        clean_word = word.strip(".,!?")
+        if clean_word in vocab:
+            vector[vocab[clean_word]] += 1
+    return vector
+
+def bow_search(query, docs):
+    """
+    Rank documents by lexical overlap using the BOW technique. 
+    The dot product between the query vector and each document vector 
+    indicates how many words they share.
+    """
+    query_vec = bow_vectorize(query, VOCAB)
+    scores = []
+    for i, doc in enumerate(docs):
+        doc_vec = bow_vectorize(doc, VOCAB)
+        score = np.dot(query_vec, doc_vec)  # Higher score = more overlap
+        scores.append((i, score))
+    # Sort by descending overlap
+    scores.sort(key=lambda x: x[1], reverse=True)
+    return scores
+
+def cos_sim(a, b):
+    """
+    Compute cosine similarity between two vectors, 
+    indicating how similar they are.
+    """
+    return np.dot(a, b) / (norm(a) * norm(b))
+
+def embedding_search(query, docs, model):
+    """
+    Rank documents by comparing how semantically close they are 
+    to the query in the embedding space using cosine similarity.
+    """
+    # Encode both the query and documents into embeddings
+    query_emb = model.encode([query])[0]
+    doc_embs = model.encode(docs)
+
+    scores = []
+    for i, emb in enumerate(doc_embs):
+        score = cos_sim(query_emb, emb)
+        scores.append((i, score))
+    # Sort by semantic similarity in descending order
+    scores.sort(key=lambda x: x[1], reverse=True)
+    return scores
+
+
+def main():
+    from sentence_transformers import SentenceTransformer
+
+    # Sample documents
+    documents = [
+        "RAG stands for Retrieval Augmented Generation.",
+        "A Large Language Model is a Generative AI model for text generation.",
+        "RAG enhance text generation of LLMs by incorporating external data",
+        "Bananas are yellow fruits.",
+        "Apples are good for your health.",
+        "What's monkey's favorite food?"
+    ]
+
+    # Sample query
+    query = "What is RAG in AI?"
+
+    # Perform Bag-of-Words search
+    bow_results = bow_search(query, documents)
+    print("Bag-of-Words Search Results:")
+    for idx, score in bow_results:
+        print(f"Doc {idx} (Score: {score}): {documents[idx]}")
+
+    # Initialize embedding model
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+
+    # Perform Embedding-based search
+    emb_results = embedding_search(query, documents, model)
+    print("\nEmbedding-based Search Results:")
+    for idx, score in emb_results:
+        print(f"Doc {idx} (Score: {score:.4f}): {documents[idx]}")
+
+
+if __name__ == "__main__":
+    main()
