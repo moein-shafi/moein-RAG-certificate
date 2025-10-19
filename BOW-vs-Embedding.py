@@ -57,28 +57,6 @@ def bow_vectorize(text, vocab=VOCAB):
     return vector
 
 
-
-# def bow_vectorize(text, vocab):
-#     """
-#     Convert a text into a Bag-of-Words vector by counting how many times 
-#     each token from our vocabulary appears in the text.
-#     """
-#     vector = np.zeros(len(vocab), dtype=int)
-#     for word in text.lower().split():
-#         # Remove punctuation for consistency
-#         clean_word = word.strip(".,!?")
-#         if clean_word in vocab:
-#             vector[vocab[clean_word]] += 1
-#         # TODO: Count bigrams in the vector
-#         if ' ' in clean_word:
-#             bigrams = clean_word.split(' ')
-#             for i in range(len(bigrams) - 1):
-#                 bigram = f"{bigrams[i]} {bigrams[i + 1]}"
-#                 if bigram in vocab:
-#                     vector[vocab[bigram]] += 1
-
-#     return vector
-
 def bow_search(query, docs):
     """
     Rank documents by lexical overlap using the BOW technique. 
